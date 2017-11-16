@@ -43,6 +43,7 @@ class Page(EventEmitter):
         FrameDetached='framedetached',
         FrameNavigated='framenavigated',
         Load='load',
+        SecurityStateChanged='securitystatechanged'
     )
 
     PaperFormats: Dict[str, Dict[str, float]] = dict(
@@ -108,8 +109,13 @@ class Page(EventEmitter):
                       exception.get('exceptionDetails')))
         client.on('Security.certificateError',
                   lambda event: self._onCertificateError(event))
+        client.on('Security.securityStateChanged',
+                  lambda event: self._onSecurityStateChanged(event))
         client.on('Inspector.targetCrashed',
                   lambda event: self._onTargetCrashed())
+
+    def _onSecurityStateChanged(self, event: Any) -> None:
+        self.emit(Page.Events.SecurityStateChanged, event)
 
     def _onTargetCrashed(self, *args: Any, **kwargs: Any) -> None:
         self.emit('error', PageError('Page crashed!'))
