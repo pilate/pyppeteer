@@ -97,7 +97,7 @@ def download_chromium() -> None:
 
 def chromium_excutable() -> Path:
     """Get path of the chromium executable."""
-    if os.environ["CHROME_PATH"]:
+    if os.environ.has_key("CHROME_PATH"):
         return Path(os.environ["CHROME_PATH"])
     return chromiumExecutable[curret_platform()]
 
