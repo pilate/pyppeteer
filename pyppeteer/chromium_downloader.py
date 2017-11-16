@@ -5,6 +5,7 @@
 
 from io import BytesIO
 import logging
+import os
 from pathlib import Path
 import stat
 import sys
@@ -96,6 +97,8 @@ def download_chromium() -> None:
 
 def chromium_excutable() -> Path:
     """Get path of the chromium executable."""
+    if os.environ["CHROME_PATH"]:
+        return Path(os.environ["CHROME_PATH"])
     return chromiumExecutable[curret_platform()]
 
 
