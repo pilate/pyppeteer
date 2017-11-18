@@ -321,6 +321,10 @@ class Response(object):
     status: int
     #: url of the reponse.
     url: str
+    # security state of the request resource
+    securityState: str
+    # security details for the request
+    securityDetails: dict
 
     def __init__(self, client: Session, request: Request, status: int,
                  headers: Dict[str, str]) -> None:
