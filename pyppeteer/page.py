@@ -26,7 +26,6 @@ from pyppeteer.navigator_watcher import NavigatorWatcher
 from pyppeteer.network_manager import NetworkManager, Response
 from pyppeteer.tracing import Tracing
 
-
 class Page(EventEmitter):
     """Page class."""
 
@@ -43,7 +42,12 @@ class Page(EventEmitter):
         FrameDetached='framedetached',
         FrameNavigated='framenavigated',
         Load='load',
-        SecurityStateChanged='securitystatechanged'
+        SecurityStateChanged='securitystatechanged',
+        ScriptParsed='scriptparsed',
+        DebuggerPaused='debuggerpaused',
+        DOMStorageItemAdded='domstorageitemadded',
+        DOMStorageItemUpdated='domstorageitemupdated',
+        RuntimeConsoleAPICalled='runtimeconsoleapicalled',
     )
 
     PaperFormats: Dict[str, Dict[str, float]] = dict(
@@ -111,11 +115,18 @@ class Page(EventEmitter):
                   lambda event: self._onCertificateError(event))
         client.on('Security.securityStateChanged',
                   lambda event: self._onSecurityStateChanged(event))
+        client.on('Debugger.scriptParsed',
+                  lambda event: self._onScriptParsed(event))
+        client.on('Debugger.paused',
+                  lambda event: self._onDebuggerPaused(event))
+        client.on('Runtime.consoleAPICalled',
+                  lambda event: self._onRuntimeConsoleAPICalled(event))
         client.on('Inspector.targetCrashed',
                   lambda event: self._onTargetCrashed())
-
-    def _onSecurityStateChanged(self, event: Any) -> None:
-        self.emit(Page.Events.SecurityStateChanged, event)
+        client.on('DOMStorage.domStorageItemAdded',
+                  lambda event: self._onDOMStorageItemAdded())
+        client.on('DOMStorage.domStorageItemUpdated',
+                  lambda event: self._onDOMStorageItemUpdated())
 
     def _onTargetCrashed(self, *args: Any, **kwargs: Any) -> None:
         self.emit('error', PageError('Page crashed!'))
@@ -167,6 +178,27 @@ class Page(EventEmitter):
             })
         )
 
+    def _onSecurityStateChanged(self, event: Any) -> None:
+        self.emit(Page.Events.SecurityStateChanged, event)
+
+    def _onDebuggerPaused(self, event: Any) -> None:
+        self.emit(Page.Events.DebuggerPaused, event)
+
+    def _onRuntimeConsoleAPICalled(self, event: Any) -> None:
+        self.emit(Page.Events.RuntimeConsoleAPICalled, event)
+
+    def _onScriptParsed(self, event: Any) -> None:
+        self.emit(Page.Events.ScriptParsed, event)
+
+    def _onDOMStorageItemAdded(self, event: Any) -> None:
+        params = event['params']
+        self.emit(Page.Events.DOMStorageItemAdded, params)
+
+    def _onDOMStorageItemUpdated(self, event: Any) -> None:
+        params = event['params']
+        self.emit(Page.Events.DOMStorageItemUpdated, params)
+
+
     async def querySelector(self, selector: str) -> Optional['ElementHandle']:
         """Get Element which matches `selector`."""
         frame = self.mainFrame
@@ -196,6 +228,16 @@ class Page(EventEmitter):
     Jeval = querySelectorEval
     #: alias to querySelectorAll
     JJ = querySelectorAll
+
+    async def pauseJS(self) -> None:
+        await self._client.send('Debugger.pause', {})
+
+    async def getScriptSource(self, scriptId) -> dict:
+        response = await self._client.send('Debugger.getScriptSource', {'scriptId': scriptId})
+        return response
+
+    async def stepInto(self) -> None:
+        await self._client.send('Debugger.stepInto', {})
 
     async def cookies(self, *urls: str) -> dict:
         """Get cookies."""
@@ -771,10 +813,12 @@ def convertPrintParameterToInches(parameter: Union[None, int, float, str]
 async def create_page(client: Session, ignoreHTTPSErrors: bool = False,
                       screenshotTaskQueue: list = None) -> Page:
     """Async function which make new page."""
-    await client.send('Network.enable', {}),
-    await client.send('Page.enable', {}),
-    await client.send('Runtime.enable', {}),
-    await client.send('Security.enable', {}),
+    await client.send('Network.enable', {})
+    await client.send('Page.enable', {})
+    await client.send('Runtime.enable', {})
+    await client.send('Debugger.enable', {})
+    await client.send('Security.enable', {})
+    await client.send('DOMStorage.enable',{})
     if ignoreHTTPSErrors:
         await client.send('Security.setOverrideCertificateErrors',
                           {'override': True})
