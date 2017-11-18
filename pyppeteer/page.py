@@ -816,7 +816,7 @@ async def create_page(client: Session, ignoreHTTPSErrors: bool = False,
     await client.send('Network.enable', {})
     await client.send('Page.enable', {})
     await client.send('Runtime.enable', {})
-    # await client.send('Debugger.enable', {})
+    await client.send('Debugger.enable', {})
     await client.send('Security.enable', {})
     await client.send('DOMStorage.enable',{})
     if ignoreHTTPSErrors:
