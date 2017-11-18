@@ -217,6 +217,8 @@ class NetworkManager(EventEmitter):
         response = Response(self._client, request,
                             _resp.get('status', 0),
                             _resp.get('headers', {}))
+        response.securityState = _resp.get('securityState', '')
+        response.securityDetails = _resp.get('securityDetails', {})
         request._response = response
         self.emit(NetworkManager.Events.Response, response)
 
@@ -335,6 +337,8 @@ class Response(object):
         self._contentPromise = asyncio.get_event_loop().create_future()
         self.ok = 200 <= status <= 299
         self.url = request.url
+        self.securityState = ""
+        self.securityDetails = {}
         self._headers = {k.lower(): v for k, v in headers.items()}
 
     async def _bufread(self) -> bytes:
