@@ -99,7 +99,7 @@ class Launcher(object):
         self.proc = subprocess.Popen(
             self.cmd,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
         atexit.register(self.killChrome)
         import time
