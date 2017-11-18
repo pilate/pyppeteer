@@ -108,8 +108,9 @@ class Launcher(object):
             # setting timeout timer is bettter
             time.sleep(0.1)
             if self.proc.poll() is not None:
+                stderr = self.proc.stderr.read()
                 raise BrowserError('Unexpectedly chrome process closed with '
-                                   f'return code: {self.proc.returncode}')
+                                   f'return code: {self.proc.returncode} {stderr}')
             msg = self.proc.stdout.readline().decode()
             if not msg:
                 continue
