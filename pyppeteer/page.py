@@ -191,12 +191,10 @@ class Page(EventEmitter):
         self.emit(Page.Events.ScriptParsed, event)
 
     def _onDOMStorageItemAdded(self, event: Any) -> None:
-        params = event['params']
-        self.emit(Page.Events.DOMStorageItemAdded, params)
+        self.emit(Page.Events.DOMStorageItemAdded, event)
 
     def _onDOMStorageItemUpdated(self, event: Any) -> None:
-        params = event['params']
-        self.emit(Page.Events.DOMStorageItemUpdated, params)
+        self.emit(Page.Events.DOMStorageItemUpdated, event)
 
 
     async def querySelector(self, selector: str) -> Optional['ElementHandle']:
