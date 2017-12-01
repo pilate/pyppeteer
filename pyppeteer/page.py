@@ -124,9 +124,9 @@ class Page(EventEmitter):
         client.on('Inspector.targetCrashed',
                   lambda event: self._onTargetCrashed())
         client.on('DOMStorage.domStorageItemAdded',
-                  lambda event: self._onDOMStorageItemAdded())
+                  lambda event: self._onDOMStorageItemAdded(event))
         client.on('DOMStorage.domStorageItemUpdated',
-                  lambda event: self._onDOMStorageItemUpdated())
+                  lambda event: self._onDOMStorageItemUpdated(event))
 
     def _onTargetCrashed(self, *args: Any, **kwargs: Any) -> None:
         self.emit('error', PageError('Page crashed!'))
