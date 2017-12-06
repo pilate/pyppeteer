@@ -48,6 +48,7 @@ class Page(EventEmitter):
         DOMStorageItemAdded='domstorageitemadded',
         DOMStorageItemUpdated='domstorageitemupdated',
         RuntimeConsoleAPICalled='runtimeconsoleapicalled',
+        executionContextCreated='executioncontextcreated'
     )
 
     PaperFormats: Dict[str, Dict[str, float]] = dict(
@@ -102,6 +103,21 @@ class Page(EventEmitter):
         _nm.on(NetworkManager.Events.RequestFinished,
                lambda event: self.emit(Page.Events.RequestFinished, event))
 
+        client.on('Debugger.paused',
+               lambda event: self.emit(Page.Events.DebuggerPaused, event))
+        client.on('Debugger.scriptParsed',
+               lambda event: self.emit(Page.Events.ScriptParsed, event))
+        client.on('DOMStorage.domStorageItemAdded',
+               lambda event: self.emit(Page.Events.DOMStorageItemAdded, event))
+        client.on('DOMStorage.domStorageItemUpdated',
+               lambda event: self.emit(Page.Events.DOMStorageItemUpdated, event))
+        client.on('Runtime.consoleAPICalled',
+               lambda event: self.emit(Page.Events.RuntimeConsoleAPICalled, event))
+        client.on('Security.securityStateChanged',
+               lambda event: self.emit(Page.Events.SecurityStateChanged, event))
+        client.on('Runtime.executionContextCreated',
+               lambda event: self.emit(Page.Events.executionContextCreated, event))
+
         client.on('Page.loadEventFired',
                   lambda event: self.emit(Page.Events.Load))
         client.on('Runtime.consoleAPICalled',
@@ -113,20 +129,8 @@ class Page(EventEmitter):
                       exception.get('exceptionDetails')))
         client.on('Security.certificateError',
                   lambda event: self._onCertificateError(event))
-        client.on('Security.securityStateChanged',
-                  lambda event: self._onSecurityStateChanged(event))
-        client.on('Debugger.scriptParsed',
-                  lambda event: self._onScriptParsed(event))
-        client.on('Debugger.paused',
-                  lambda event: self._onDebuggerPaused(event))
-        client.on('Runtime.consoleAPICalled',
-                  lambda event: self._onRuntimeConsoleAPICalled(event))
         client.on('Inspector.targetCrashed',
                   lambda event: self._onTargetCrashed())
-        client.on('DOMStorage.domStorageItemAdded',
-                  lambda event: self._onDOMStorageItemAdded(event))
-        client.on('DOMStorage.domStorageItemUpdated',
-                  lambda event: self._onDOMStorageItemUpdated(event))
 
     def _onTargetCrashed(self, *args: Any, **kwargs: Any) -> None:
         self.emit('error', PageError('Page crashed!'))
@@ -177,25 +181,6 @@ class Page(EventEmitter):
                 'action': 'continue'
             })
         )
-
-    def _onSecurityStateChanged(self, event: Any) -> None:
-        self.emit(Page.Events.SecurityStateChanged, event)
-
-    def _onDebuggerPaused(self, event: Any) -> None:
-        self.emit(Page.Events.DebuggerPaused, event)
-
-    def _onRuntimeConsoleAPICalled(self, event: Any) -> None:
-        self.emit(Page.Events.RuntimeConsoleAPICalled, event)
-
-    def _onScriptParsed(self, event: Any) -> None:
-        self.emit(Page.Events.ScriptParsed, event)
-
-    def _onDOMStorageItemAdded(self, event: Any) -> None:
-        self.emit(Page.Events.DOMStorageItemAdded, event)
-
-    def _onDOMStorageItemUpdated(self, event: Any) -> None:
-        self.emit(Page.Events.DOMStorageItemUpdated, event)
-
 
     async def querySelector(self, selector: str) -> Optional['ElementHandle']:
         """Get Element which matches `selector`."""
